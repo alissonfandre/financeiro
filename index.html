@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0b0e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>FinCtrl</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & VARS ─────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0b0e;
+  --s1:#111318;
+  --s2:#181b22;
+  --s3:#1f232e;
+  --bdr:#252b38;
+  --bdr2:#2e3545;
+  --lime:#b8f455;
+  --cyan:#45e8d4;
+  --rose:#ff4d6d;
+  --amber:#ffb627;
+  --violet:#a78bfa;
+  --txt:#dde2ef;
+  --muted:#5a6478;
+  --muted2:#3e4759;
+  --fh:'Clash Display',sans-serif;
+  --fm:'Geist Mono',monospace;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+html{height:100%;-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--txt);font-family:var(--fm);
+  min-height:100vh;min-height:100dvh;
+  overflow-x:hidden;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-font-smoothing:antialiased;
+}
+input,select,button{font-family:var(--fm);-webkit-appearance:none;appearance:none;border-radius:0}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=color]{-webkit-appearance:none;padding:0;border:none}
+*{scrollbar-width:thin;scrollbar-color:var(--bdr2) transparent}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+
+/* ── GRID BG ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(var(--s2) 1px,transparent 1px),
+    linear-gradient(90deg,var(--s2) 1px,transparent 1px);
+  background-size:40px 40px;opacity:.28;pointer-events:none;z-index:0
+}
+
+/* ═══════════════════════════════════════════════════════
+   LOGIN SCREEN
+═══════════════════════════════════════════════════════ */
+#loginScreen{
+  position:fixed;inset:0;z-index:100;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  background:var(--bg);
+}
+#loginScreen::before{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(var(--s2) 1px,transparent 1px),
+    linear-gradient(90deg,var(--s2) 1px,transparent 1px);
+  background-size:40px 40px;opacity:.28;pointer-events:none;
+}
+.login-box{
+  position:relative;z-index:1;
+  width:100%;max-width:380px;
+  background:var(--s1);border:1px solid var(--bdr2);
+  border-radius:20px;padding:40px 32px;
+  text-align:center;
+  box-shadow:0 32px 80px rgba(0,0,0,.6);
+}
+.login-glow{
+  position:absolute;top:-80px;left:50%;transform:translateX(-50%);
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(184,244,85,.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.login-brand{font-family:var(--fh);font-size:32px;font-weight:700;letter-spacing:-1px;margin-bottom:6px}
+.login-brand b{color:var(--lime)}
+.login-sub{font-size:12px;color:var(--muted);margin-bottom:32px;letter-spacing:.5px}
+.login-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);text-align:left;display:block;margin-bottom:8px}
+.login-input-wrap{position:relative;margin-bottom:16px}
+.login-input{
+  width:100%;background:var(--bg);border:1px solid var(--bdr2);
+  border-radius:10px;color:var(--txt);font-family:var(--fm);
+  font-size:16px;padding:14px 48px 14px 16px;outline:none;
+  transition:border-color .2s;letter-spacing:2px;text-align:center;
+}
+.login-input:focus{border-color:var(--lime)}
+.login-input.error{border-color:var(--rose);animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.eye-btn{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  font-size:18px;padding:4px;line-height:1;
+}
+.login-btn{
+  width:100%;background:var(--lime);color:#0a0b0e;border:none;
+  border-radius:10px;font-family:var(--fh);font-size:15px;font-weight:700;
+  padding:14px;cursor:pointer;transition:opacity .2s,transform .1s;
+  letter-spacing:.3px;margin-top:4px;
+}
+.login-btn:hover{opacity:.88}
+.login-btn:active{transform:scale(.98)}
+.login-error{color:var(--rose);font-size:11px;margin-top:10px;min-height:16px;transition:opacity .2s}
+.login-hint{font-size:10px;color:var(--muted2);margin-top:20px;line-height:1.6}
+.login-hint a{color:var(--muted);cursor:pointer;text-decoration:underline}
+
+/* change password modal */
+.modal-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal-box{
+  background:var(--s1);border:1px solid var(--bdr2);border-radius:16px;
+  padding:28px 24px;width:100%;max-width:340px;
+}
+.modal-title{font-family:var(--fh);font-size:16px;font-weight:700;margin-bottom:20px}
+.modal-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.modal-field label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)}
+.modal-field input{
+  background:var(--bg);border:1px solid var(--bdr);border-radius:8px;
+  color:var(--txt);font-family:var(--fm);font-size:14px;
+  padding:11px 14px;outline:none;transition:border-color .2s;
+}
+.modal-field input:focus{border-color:var(--lime)}
+.modal-btns{display:flex;gap:8px;margin-top:18px}
+.modal-btn-cancel{flex:1;background:var(--s3);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);font-family:var(--fh);font-size:12px;font-weight:600;padding:11px;cursor:pointer}
+.modal-btn-save{flex:1;background:var(--lime);border:none;border-radius:8px;color:#0a0b0e;font-family:var(--fh);font-size:12px;font-weight:700;padding:11px;cursor:pointer}
+.modal-msg{font-size:11px;margin-top:10px;min-height:16px}
+
+/* ═══════════════════════════════════════════════════════
+   APP
+═══════════════════════════════════════════════════════ */
+#app{
+  display:none;position:relative;z-index:1;
+  max-width:1160px;margin:0 auto;
+  padding:16px 14px calc(16px + var(--safe-bottom)) 14px;
+}
+@media(min-width:700px){#app{padding:28px 20px 60px}}
+
+/* ── NAV ── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--bdr);
+  gap:10px;
+}
+.brand{font-family:var(--fh);font-size:20px;font-weight:700;letter-spacing:-.5px;flex-shrink:0}
+.brand b{color:var(--lime)}
+.nav-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.period-pill{display:flex;align-items:center;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;overflow:hidden}
+.period-pill select{
+  background:transparent;border:none;color:var(--txt);font-family:var(--fm);
+  font-size:12px;padding:8px 10px;cursor:pointer;outline:none;max-width:90px;
+}
+@media(max-width:380px){.period-pill select{font-size:11px;padding:7px 6px;max-width:70px}}
+.period-pill select option{background:var(--s1)}
+.pdiv{width:1px;height:26px;background:var(--bdr)}
+.logout-btn{
+  background:var(--s2);border:1px solid var(--bdr);border-radius:8px;
+  color:var(--muted);font-family:var(--fm);font-size:11px;
+  padding:7px 12px;cursor:pointer;transition:color .15s,border-color .15s;
+  white-space:nowrap;
+}
+.logout-btn:hover{color:var(--rose);border-color:var(--rose)}
+
+/* ── TOP AREA ── */
+.top-area{display:grid;gap:12px;margin-bottom:12px}
+/* mobile: stack */
+.top-inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.top-inputs{grid-template-columns:1fr}}
+
+/* salary card */
+.salary-card{
+  background:linear-gradient(140deg,var(--s2),var(--s3));
+  border:1px solid var(--bdr2);border-radius:14px;padding:18px 20px;
+  position:relative;overflow:hidden;
+}
+.salary-card::before{
+  content:'';position:absolute;top:-20px;right:-20px;width:130px;height:130px;
+  background:radial-gradient(circle,rgba(184,244,85,.08) 0%,transparent 70%);pointer-events:none
+}
+.sc-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:8px}
+.sc-row{display:flex;align-items:baseline;gap:4px}
+.sc-prefix{font-family:var(--fh);font-size:14px;font-weight:600;color:var(--muted2)}
+input.sc-val{
+  background:transparent;border:none;font-family:var(--fh);
+  font-size:28px;font-weight:700;color:var(--lime);width:100%;
+  outline:none;letter-spacing:-1px;min-width:0;
+}
+@media(max-width:400px){input.sc-val{font-size:24px}}
+input.sc-val::placeholder{color:var(--muted2)}
+.sc-sub{font-size:10px;color:var(--muted);margin-top:4px}
+
+/* reserve card */
+.reserve-card{
+  background:linear-gradient(140deg,#131620,#1a1e2c);
+  border:1px solid rgba(167,139,250,.2);border-radius:14px;padding:18px 20px;
+  position:relative;overflow:hidden;
+}
+.reserve-card::before{
+  content:'';position:absolute;top:-20px;right:-20px;width:130px;height:130px;
+  background:radial-gradient(circle,rgba(167,139,250,.08) 0%,transparent 70%);pointer-events:none
+}
+.rc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px}
+.rc-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted)}
+.rc-badge{font-size:9px;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.25);border-radius:20px;padding:2px 7px;color:var(--violet);flex-shrink:0}
+.rc-row{display:flex;align-items:baseline;gap:4px}
+.rc-prefix{font-family:var(--fh);font-size:14px;font-weight:600;color:var(--muted2)}
+input.rc-val{
+  background:transparent;border:none;font-family:var(--fh);
+  font-size:28px;font-weight:700;color:var(--violet);width:100%;
+  outline:none;letter-spacing:-1px;min-width:0;
+}
+@media(max-width:400px){input.rc-val{font-size:24px}}
+input.rc-val::placeholder{color:var(--muted2)}
+.rc-sub{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5}
+
+/* ── OV CARDS ── */
+.ov-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+@media(min-width:600px){.ov-cards{grid-template-columns:repeat(4,1fr)}}
+.ov-card{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+.ov-card::after{content:'';position:absolute;top:0;right:0;width:38px;height:38px;border-radius:0 12px 0 38px;opacity:.14}
+.ov-card.ct::after{background:var(--rose)}
+.ov-card.cb::after{background:var(--lime)}
+.ov-card.cr::after{background:var(--violet)}
+.ov-card.cp::after{background:var(--amber)}
+.ov-label{font-size:9px;text-transform:uppercase;letter-spacing:1.8px;color:var(--muted);margin-bottom:6px}
+.ov-val{font-family:var(--fh);font-size:18px;font-weight:700;letter-spacing:-.5px;line-height:1.1}
+@media(min-width:600px){.ov-val{font-size:20px}}
+.ov-card.ct .ov-val{color:var(--rose)}
+.ov-card.cb .ov-val{color:var(--lime)}
+.ov-card.cr .ov-val{color:var(--violet)}
+.ov-card.cp .ov-val{color:var(--amber)}
+.ov-sub{font-size:9px;color:var(--muted);margin-top:4px}
+
+/* ── MAIN GRID ── */
+/* mobile: single col | desktop: 2 col */
+.main{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:800px){.main{grid-template-columns:1fr 360px}}
+.col-l,.col-r{display:flex;flex-direction:column;gap:12px}
+
+/* ── PANELS ── */
+.panel{background:var(--s1);border:1px solid var(--bdr);border-radius:14px;overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--bdr)}
+.ph-title{font-family:var(--fh);font-size:12px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.ph-badge{font-size:10px;background:var(--s3);border:1px solid var(--bdr2);border-radius:20px;padding:2px 9px;color:var(--muted)}
+.tag-cc{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;padding:2px 9px;border-radius:20px;color:var(--cyan);border:1px solid rgba(69,232,212,.25)}
+
+/* ── CC VISUAL ── */
+.cc-visual{
+  margin:14px 18px;
+  background:linear-gradient(135deg,#181f32,#222d45);
+  border-radius:12px;padding:18px;position:relative;overflow:hidden;
+}
+.cc-visual::before{content:'';position:absolute;top:-40px;right:-30px;width:140px;height:140px;background:radial-gradient(circle,rgba(69,232,212,.1) 0%,transparent 70%)}
+.cc-visual::after{content:'';position:absolute;bottom:-20px;left:10px;width:120px;height:120px;background:radial-gradient(circle,rgba(77,159,255,.07) 0%,transparent 70%)}
+.cc-chip{width:28px;height:20px;background:linear-gradient(135deg,#c8a94a,#e8c96a);border-radius:3px;margin-bottom:10px;position:relative;z-index:1}
+.cc-card-name{font-family:var(--fh);font-size:14px;font-weight:600;position:relative;z-index:1;margin-bottom:12px}
+.cc-fields{display:flex;gap:0;position:relative;z-index:1;flex-wrap:wrap;gap:10px 0}
+.cc-field{flex:1;min-width:80px}
+.cc-fl{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,.3);margin-bottom:2px}
+.cc-fv{font-size:12px;font-weight:500}
+.cc-fv.pay{color:var(--rose)}
+.cc-fv.avail{color:var(--lime)}
+.cc-fv.venc-val{color:var(--muted)}
+
+/* disp bar */
+.cc-disp-bar{padding:2px 18px 14px}
+.cdb-hd{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:5px}
+.cdb-hd span:last-child{color:var(--txt);font-weight:500}
+.cdb-track{height:5px;background:var(--bdr);border-radius:5px;overflow:hidden}
+.cdb-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--lime),var(--cyan));transition:width .5s}
+
+/* cc inputs */
+.cc-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 18px;background:var(--s2);border-bottom:1px solid var(--bdr)}
+@media(min-width:500px){.cc-inputs{grid-template-columns:repeat(4,1fr)}}
+.field-g{display:flex;flex-direction:column;gap:4px}
+.field-g label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.fi{
+  background:var(--bg);border:1px solid var(--bdr);border-radius:8px;
+  color:var(--txt);font-family:var(--fm);font-size:14px;
+  padding:10px 12px;outline:none;width:100%;transition:border-color .2s;
+}
+.fi:focus{border-color:var(--cyan)}
+.fi::placeholder{color:var(--muted)}
+.fi option{background:var(--bg)}
+
+/* reserva info box */
+.cc-info-box{
+  margin:0 18px 12px;
+  background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);
+  border-radius:8px;padding:10px 13px;
+}
+.cib-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;gap:8px}
+.cib-row+.cib-row{margin-top:5px}
+.cib-key{color:var(--muted);flex:1}
+.cib-val{font-family:var(--fh);font-size:13px;font-weight:600;flex-shrink:0}
+
+/* ── ACCOUNTS ── */
+.acc-list{padding:0}
+.acc-item{
+  display:flex;align-items:center;padding:12px 18px;
+  border-bottom:1px solid var(--bdr);gap:10px;
+  transition:background .15s;animation:fu .2s ease;
+}
+.acc-item:last-child{border-bottom:none}
+.acc-item:active{background:var(--s2)}
+@media(hover:hover){.acc-item:hover{background:var(--s2)}}
+@keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.acc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.acc-info{flex:1;min-width:0}
+.acc-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-meta{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.8px}
+.acc-amt{font-family:var(--fh);font-size:15px;font-weight:700;flex-shrink:0}
+.acc-del{
+  background:none;border:none;color:var(--muted2);
+  font-size:20px;cursor:pointer;padding:4px 6px;line-height:1;
+  transition:color .15s;flex-shrink:0;min-width:32px;text-align:center;
+}
+.acc-del:active{color:var(--rose)}
+@media(hover:hover){.acc-del:hover{color:var(--rose)}}
+.empty-msg{text-align:center;color:var(--muted);font-size:12px;padding:24px 18px;line-height:1.8}
+
+/* add form */
+.add-form{
+  padding:12px 18px;background:var(--s2);border-top:1px solid var(--bdr);
+  display:grid;gap:8px;
+  grid-template-columns:1fr 1fr;
+  grid-template-areas:"nome valor" "cor btn";
+}
+@media(min-width:500px){
+  .add-form{grid-template-columns:1fr 110px 36px auto;grid-template-areas:"nome valor cor btn"}
+}
+.add-form .gn{grid-area:nome}
+.add-form .gv{grid-area:valor}
+.add-form .gc{grid-area:cor;display:flex;flex-direction:column;gap:4px}
+.add-form .gb{grid-area:btn;display:flex;align-items:flex-end}
+.color-pick{width:100%;height:36px;border-radius:8px;border:1px solid var(--bdr);cursor:pointer;background:var(--bg);padding:3px;display:block}
+.btn-add{
+  width:100%;background:var(--lime);color:#0a0b0e;border:none;border-radius:8px;
+  font-family:var(--fh);font-size:12px;font-weight:700;
+  padding:0 14px;cursor:pointer;transition:opacity .2s,transform .1s;
+  height:36px;white-space:nowrap;
+}
+.btn-add:active{transform:scale(.97);opacity:.85}
+@media(hover:hover){.btn-add:hover{opacity:.85}}
+
+/* ── CHART ── */
+.chart-area{padding:18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.legend{flex:1;display:flex;flex-direction:column;gap:8px;min-width:120px}
+.leg-item{display:flex;align-items:center;gap:8px;font-size:11px}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.leg-name{flex:1;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.leg-pct{font-weight:500;font-family:var(--fh);font-size:13px;flex-shrink:0}
+.no-chart{text-align:center;color:var(--muted);font-size:12px;padding:26px;width:100%}
+
+/* ── SUMMARY ── */
+.sum-body{padding:0 18px 2px}
+.sum-section-title{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);padding:10px 0 5px;border-bottom:1px solid var(--bdr)}
+.sum-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bdr);gap:8px}
+.sum-row:last-child{border-bottom:none}
+.sum-key{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px;flex:1;min-width:0}
+.sum-key-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sum-val{font-family:var(--fh);font-size:13px;font-weight:600;flex-shrink:0}
+.sum-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;background:var(--s2);border-top:1px solid var(--bdr);gap:8px;
+}
+.sf-key{font-family:var(--fh);font-size:13px;font-weight:700}
+.sf-val{font-family:var(--fh);font-size:20px;font-weight:700;color:var(--lime)}
+.sf-val.neg{color:var(--rose)}
+
+/* ── DESKTOP TWEAKS ── */
+@media(min-width:800px){
+  .top-area{grid-template-columns:260px 1fr}
+  .top-inputs{grid-template-columns:1fr 1fr}
+}
+@media(min-width:1000px){
+  .cc-inputs{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN SCREEN ═══════════ -->
+<div id="loginScreen">
+  <div class="login-glow"></div>
+  <div class="login-box">
+    <div class="login-brand">fin<b>.</b>ctrl</div>
+    <div class="login-sub">Organização financeira pessoal</div>
+
+    <label class="login-label">Senha de acesso</label>
+    <div class="login-input-wrap">
+      <input class="login-input" id="loginInput" type="password"
+        placeholder="••••••••" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="eye-btn" onclick="toggleEye()" id="eyeBtn" type="button">👁</button>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-hint">
+      Primeiro acesso? A senha padrão é <b>1234</b><br>
+      <a onclick="openChangeModal()">Alterar senha</a>
+    </div>
+  </div>
+</div>
+
+<!-- change password modal -->
+<div class="modal-overlay" id="changePwModal" style="display:none" onclick="if(event.target===this)closeChangeModal()">
+  <div class="modal-box">
+    <div class="modal-title">🔑 Alterar Senha</div>
+    <div class="modal-field">
+      <label>Senha atual</label>
+      <input type="password" id="cpOld" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="modal-field">
+      <label>Nova senha</label>
+      <input type="password" id="cpNew" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="modal-field">
+      <label>Confirmar nova senha</label>
+      <input type="password" id="cpConf" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="modal-msg" id="cpMsg"></div>
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="closeChangeModal()">Cancelar</button>
+      <button class="modal-btn-save" onclick="saveNewPw()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div id="app">
+
+  <!-- NAV -->
+  <nav>
+    <div class="brand">fin<b>.</b>ctrl</div>
+    <div class="nav-right">
+      <div class="period-pill">
+        <select id="selMes" onchange="onPeriodChange()">
+          <option value="0">Jan</option><option value="1">Fev</option>
+          <option value="2">Mar</option><option value="3">Abr</option>
+          <option value="4">Mai</option><option value="5">Jun</option>
+          <option value="6">Jul</option><option value="7">Ago</option>
+          <option value="8">Set</option><option value="9">Out</option>
+          <option value="10">Nov</option><option value="11">Dez</option>
+        </select>
+        <div class="pdiv"></div>
+        <select id="selAno" onchange="onPeriodChange()"></select>
+      </div>
+      <button class="logout-btn" onclick="logout()">Sair</button>
+    </div>
+  </nav>
+
+  <!-- TOP INPUTS -->
+  <div class="top-inputs" style="margin-bottom:12px">
+    <div class="salary-card">
+      <div class="sc-label">💰 Salário do Mês</div>
+      <div class="sc-row">
+        <span class="sc-prefix">R$</span>
+        <input class="sc-val" id="salario" type="number" inputmode="decimal" placeholder="0,00" oninput="render()">
+      </div>
+      <div class="sc-sub">Renda principal deste mês</div>
+    </div>
+    <div class="reserve-card">
+      <div class="rc-top">
+        <div class="rc-label">💜 Reserva p/ Cartão</div>
+        <span class="rc-badge">opcional</span>
+      </div>
+      <div class="rc-row">
+        <span class="rc-prefix">R$</span>
+        <input class="rc-val" id="reserva" type="number" inputmode="decimal" placeholder="0,00" oninput="render()">
+      </div>
+      <div class="rc-sub">Complementa o salário para pagar o cartão</div>
+    </div>
+  </div>
+
+  <!-- OV CARDS -->
+  <div class="ov-cards">
+    <div class="ov-card ct">
+      <div class="ov-label">Total de Gastos</div>
+      <div class="ov-val" id="ovTotal">R$ 0</div>
+      <div class="ov-sub" id="ovTotalSub">0 contas</div>
+    </div>
+    <div class="ov-card cb">
+      <div class="ov-label">Base Disponível</div>
+      <div class="ov-val" id="ovBase">—</div>
+      <div class="ov-sub" id="ovBaseSub">salário + reserva</div>
+    </div>
+    <div class="ov-card cr">
+      <div class="ov-label">Reserva Usada</div>
+      <div class="ov-val" id="ovReserva">—</div>
+      <div class="ov-sub" id="ovReservaSub">para o cartão</div>
+    </div>
+    <div class="ov-card cp">
+      <div class="ov-label">% Comprometido</div>
+      <div class="ov-val" id="ovPct">—</div>
+      <div class="ov-sub" id="ovPctSub">da base total</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main">
+
+    <!-- LEFT -->
+    <div class="col-l">
+
+      <!-- CREDIT CARD -->
+      <div class="panel">
+        <div class="ph">
+          <span class="ph-title">💳 Cartão de Crédito</span>
+          <span class="tag-cc">Principal</span>
+        </div>
+        <div class="cc-visual">
+          <div class="cc-chip"></div>
+          <div class="cc-card-name" id="ccNomeDisp">Meu Cartão</div>
+          <div class="cc-fields">
+            <div class="cc-field">
+              <div class="cc-fl">Fatura a Pagar</div>
+              <div class="cc-fv pay" id="ccFatDisp">R$ 0,00</div>
+            </div>
+            <div class="cc-field">
+              <div class="cc-fl">Disponível p/ Gastar</div>
+              <div class="cc-fv avail" id="ccDispDisp">—</div>
+            </div>
+            <div class="cc-field">
+              <div class="cc-fl">Vencimento</div>
+              <div class="cc-fv venc-val" id="ccVencDisp">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="cc-disp-bar" id="ccDispBarWrap" style="display:none">
+          <div class="cdb-hd"><span>Disponível para gastar</span><span id="ccDispPct">—</span></div>
+          <div class="cdb-track"><div class="cdb-fill" id="ccDispFill" style="width:100%"></div></div>
+        </div>
+        <div class="cc-info-box" id="reservaBox" style="display:none">
+          <div class="cib-row">
+            <span class="cib-key">Reserva para este cartão</span>
+            <span class="cib-val" style="color:var(--violet)" id="ribVal">—</span>
+          </div>
+          <div class="cib-row">
+            <span class="cib-key">Falta do salário</span>
+            <span class="cib-val" id="ribFalta">—</span>
+          </div>
+        </div>
+        <div class="cc-inputs">
+          <div class="field-g">
+            <label>Nome do cartão</label>
+            <input class="fi" type="text" id="ccNome" placeholder="Ex: Nubank" oninput="render()">
+          </div>
+          <div class="field-g">
+            <label>Fatura (R$)</label>
+            <input class="fi" type="number" inputmode="decimal" id="ccFatura" placeholder="850" oninput="render()">
+          </div>
+          <div class="field-g">
+            <label>Disponível (R$)</label>
+            <input class="fi" type="number" inputmode="decimal" id="ccDisp" placeholder="2000" oninput="render()">
+          </div>
+          <div class="field-g">
+            <label>Vencimento</label>
+            <input class="fi" type="number" inputmode="numeric" id="ccVenc" placeholder="Dia 15" min="1" max="31" oninput="render()">
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCOUNTS -->
+      <div class="panel">
+        <div class="ph">
+          <span class="ph-title">📋 Contas Adicionais</span>
+          <span class="ph-badge" id="accBadge">0 contas</span>
+        </div>
+        <div id="accList">
+          <div class="empty-msg" id="accEmpty">
+            Nenhuma conta ainda.<br>
+            Ex: <b>Gasolina · R$ 170</b>
+          </div>
+        </div>
+        <div class="add-form">
+          <div class="field-g gn">
+            <label>Nome da conta</label>
+            <input class="fi" type="text" id="accNome" placeholder="Ex: Gasolina">
+          </div>
+          <div class="field-g gv">
+            <label>Valor (R$)</label>
+            <input class="fi" type="number" inputmode="decimal" id="accValor" placeholder="170">
+          </div>
+          <div class="gc">
+            <label style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Cor</label>
+            <input type="color" class="color-pick" id="accCor" value="#ff4d6d">
+          </div>
+          <div class="gb">
+            <button class="btn-add" onclick="addAcc()">+ Add</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /col-l -->
+
+    <!-- RIGHT -->
+    <div class="col-r">
+
+      <!-- PIE CHART -->
+      <div class="panel">
+        <div class="ph">
+          <span class="ph-title">📊 Distribuição</span>
+          <span class="ph-badge" id="chartBadge">sem dados</span>
+        </div>
+        <div class="chart-area">
+          <div class="no-chart" id="noChart">Adicione contas para visualizar</div>
+          <canvas id="pie" width="140" height="140" style="display:none;flex-shrink:0"></canvas>
+          <div class="legend" id="pieLeg" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="panel">
+        <div class="ph">
+          <span class="ph-title">📄 Resumo do Mês</span>
+        </div>
+        <div class="sum-body" id="sumBody">
+          <div class="empty-msg">Defina o salário e adicione contas</div>
+        </div>
+        <div class="sum-footer" id="sumFooter" style="display:none">
+          <span class="sf-key">Saldo Livre</span>
+          <span class="sf-val" id="sfVal">R$ 0,00</span>
+        </div>
+      </div>
+
+    </div><!-- /col-r -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════
+const PW_KEY='finctrl_pw';
+const SESSION_KEY='finctrl_sess';
+const DEFAULT_PW='1234';
+
+function getStoredPw(){return localStorage.getItem(PW_KEY)||DEFAULT_PW}
+function isLoggedIn(){return sessionStorage.getItem(SESSION_KEY)==='1'}
+
+function doLogin(){
+  const val=document.getElementById('loginInput').value;
+  const err=document.getElementById('loginError');
+  if(val===getStoredPw()){
+    sessionStorage.setItem(SESSION_KEY,'1');
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    err.textContent='';
+    loadInputs();render();
+  } else {
+    const inp=document.getElementById('loginInput');
+    inp.classList.add('error');
+    err.textContent='Senha incorreta. Tente novamente.';
+    setTimeout(()=>inp.classList.remove('error'),400);
+    inp.value='';inp.focus();
+  }
+}
+
+function logout(){
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById('loginInput').value='';
+  document.getElementById('loginError').textContent='';
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+}
+
+function toggleEye(){
+  const inp=document.getElementById('loginInput');
+  inp.type=inp.type==='password'?'text':'password';
+}
+
+function openChangeModal(){
+  document.getElementById('changePwModal').style.display='flex';
+  document.getElementById('cpOld').value='';
+  document.getElementById('cpNew').value='';
+  document.getElementById('cpConf').value='';
+  document.getElementById('cpMsg').textContent='';
+}
+function closeChangeModal(){document.getElementById('changePwModal').style.display='none'}
+function saveNewPw(){
+  const old=document.getElementById('cpOld').value;
+  const nw=document.getElementById('cpNew').value;
+  const cf=document.getElementById('cpConf').value;
+  const msg=document.getElementById('cpMsg');
+  if(old!==getStoredPw()){msg.style.color='var(--rose)';msg.textContent='Senha atual incorreta.';return}
+  if(!nw||nw.length<3){msg.style.color='var(--rose)';msg.textContent='Nova senha deve ter ao menos 3 caracteres.';return}
+  if(nw!==cf){msg.style.color='var(--rose)';msg.textContent='As senhas não coincidem.';return}
+  localStorage.setItem(PW_KEY,nw);
+  msg.style.color='var(--lime)';msg.textContent='Senha alterada com sucesso! ✓';
+  setTimeout(closeChangeModal,1500);
+}
+
+// check session on load
+if(isLoggedIn()){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+}
+
+// ═══════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════
+const STORE='finctrl_v4';
+let state=JSON.parse(localStorage.getItem(STORE)||'{}');
+
+const now=new Date();
+const selMes=document.getElementById('selMes');
+const selAno=document.getElementById('selAno');
+selMes.value=now.getMonth();
+for(let y=now.getFullYear()-2;y<=now.getFullYear()+1;y++){
+  const o=document.createElement('option');
+  o.value=y;o.textContent=y;if(y===now.getFullYear())o.selected=true;
+  selAno.appendChild(o);
+}
+
+function key(){return`${selAno.value}-${selMes.value}`}
+function period(){
+  const k=key();
+  if(!state[k])state[k]={salario:'',reserva:'',ccNome:'',ccFatura:'',ccDisp:'',ccVenc:'',accounts:[]};
+  return state[k];
+}
+function save(){localStorage.setItem(STORE,JSON.stringify(state))}
+
+function loadInputs(){
+  const p=period();
+  document.getElementById('salario').value=p.salario||'';
+  document.getElementById('reserva').value=p.reserva||'';
+  document.getElementById('ccNome').value=p.ccNome||'';
+  document.getElementById('ccFatura').value=p.ccFatura||'';
+  document.getElementById('ccDisp').value=p.ccDisp||'';
+  document.getElementById('ccVenc').value=p.ccVenc||'';
+}
+function syncState(){
+  const p=period();
+  p.salario=document.getElementById('salario').value;
+  p.reserva=document.getElementById('reserva').value;
+  p.ccNome=document.getElementById('ccNome').value;
+  p.ccFatura=document.getElementById('ccFatura').value;
+  p.ccDisp=document.getElementById('ccDisp').value;
+  p.ccVenc=document.getElementById('ccVenc').value;
+  save();
+}
+function onPeriodChange(){loadInputs();render()}
+
+// ═══════════════════════════════════════
+// ACCOUNTS
+// ═══════════════════════════════════════
+function addAcc(){
+  const nome=document.getElementById('accNome').value.trim();
+  const valor=parseFloat(document.getElementById('accValor').value);
+  const cor=document.getElementById('accCor').value;
+  if(!nome||isNaN(valor)||valor<0){
+    ['accNome','accValor'].forEach(id=>{
+      const el=document.getElementById(id);
+      el.style.borderColor='var(--rose)';
+      setTimeout(()=>el.style.borderColor='',800);
+    });
+    return;
+  }
+  period().accounts.push({id:Date.now(),nome,valor,cor});
+  save();
+  document.getElementById('accNome').value='';
+  document.getElementById('accValor').value='';
+  render();
+}
+function delAcc(id){
+  period().accounts=period().accounts.filter(a=>a.id!==id);
+  save();render();
+}
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+function fmt(v){return'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtK(v){return v>=1000?'R$'+(v/1000).toFixed(1)+'k':'R$'+v.toFixed(0)}
+
+// ═══════════════════════════════════════
+// PIE CHART
+// ═══════════════════════════════════════
+function drawPie(items){
+  const canvas=document.getElementById('pie');
+  const leg=document.getElementById('pieLeg');
+  const noC=document.getElementById('noChart');
+  const badge=document.getElementById('chartBadge');
+  const total=items.reduce((s,i)=>s+i.valor,0);
+  if(!items.length){
+    canvas.style.display='none';leg.style.display='none';noC.style.display='block';
+    badge.textContent='sem dados';return;
+  }
+  canvas.style.display='block';leg.style.display='flex';noC.style.display='none';
+  badge.textContent=fmt(total);
+  const ctx=canvas.getContext('2d');
+  const W=140,cx=70,cy=70,R=62,ri=24;
+  ctx.clearRect(0,0,W,W);
+  let ang=-Math.PI/2;
+  items.forEach(item=>{
+    const sl=(item.valor/total)*2*Math.PI;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,ang,ang+sl);ctx.closePath();
+    ctx.fillStyle=item.cor;ctx.fill();ang+=sl;
+  });
+  if(items.length>1){
+    ang=-Math.PI/2;
+    items.forEach(item=>{
+      const sl=(item.valor/total)*2*Math.PI;
+      ctx.beginPath();ctx.moveTo(cx,cy);
+      ctx.lineTo(cx+R*Math.cos(ang),cy+R*Math.sin(ang));
+      ctx.strokeStyle='#0a0b0e';ctx.lineWidth=2;ctx.stroke();ang+=sl;
+    });
+  }
+  ctx.beginPath();ctx.arc(cx,cy,ri,0,2*Math.PI);
+  ctx.fillStyle='#111318';ctx.fill();
+  ctx.fillStyle='#dde2ef';ctx.font='bold 8px Geist Mono,monospace';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(fmtK(total),cx,cy);
+  leg.innerHTML=items.map(i=>`
+    <div class="leg-item">
+      <div class="leg-dot" style="background:${i.cor}"></div>
+      <span class="leg-name">${i.nome}</span>
+      <span class="leg-pct" style="color:${i.cor}">${((i.valor/total)*100).toFixed(0)}%</span>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+function render(){
+  syncState();
+  const p=period();
+  const sal=parseFloat(p.salario)||0;
+  const res=parseFloat(p.reserva)||0;
+  const fat=parseFloat(p.ccFatura)||0;
+  const disp=parseFloat(p.ccDisp)||0;
+  const venc=p.ccVenc;
+  const nome=p.ccNome||'Meu Cartão';
+  const accs=p.accounts||[];
+
+  // CC visual
+  document.getElementById('ccNomeDisp').textContent=nome;
+  document.getElementById('ccFatDisp').textContent=fat?fmt(fat):'R$ 0,00';
+  document.getElementById('ccDispDisp').textContent=disp?fmt(disp):'—';
+  document.getElementById('ccVencDisp').textContent=venc?'Dia '+venc:'—';
+
+  // disp bar
+  const dispWrap=document.getElementById('ccDispBarWrap');
+  if(disp>0){
+    dispWrap.style.display='block';
+    const total2=disp+(fat||0);
+    const pct=(disp/total2)*100;
+    document.getElementById('ccDispFill').style.width=pct+'%';
+    document.getElementById('ccDispPct').textContent=fmt(disp);
+  } else {dispWrap.style.display='none'}
+
+  // reserva box
+  const ribBox=document.getElementById('reservaBox');
+  if(res>0&&fat>0){
+    ribBox.style.display='block';
+    document.getElementById('ribVal').textContent=fmt(res);
+    const falta=Math.max(0,fat-res);
+    const el=document.getElementById('ribFalta');
+    el.textContent=falta>0?fmt(falta):'Cobre a fatura ✓';
+    el.style.color=falta>0?'var(--rose)':'var(--lime)';
+  } else {ribBox.style.display='none'}
+
+  // accounts
+  const accListEl=document.getElementById('accList');
+  const accEmpty=document.getElementById('accEmpty');
+  document.getElementById('accBadge').textContent=accs.length+' conta'+(accs.length!==1?'s':'');
+  if(!accs.length){
+    accListEl.innerHTML='';accListEl.appendChild(accEmpty);accEmpty.style.display='block';
+  } else {
+    accListEl.innerHTML=accs.map(a=>`
+      <div class="acc-item">
+        <div class="acc-dot" style="background:${a.cor};box-shadow:0 0 7px ${a.cor}55"></div>
+        <div class="acc-info">
+          <div class="acc-name">${a.nome}</div>
+          <div class="acc-meta">conta variável</div>
+        </div>
+        <div class="acc-amt" style="color:${a.cor}">${fmt(a.valor)}</div>
+        <button class="acc-del" onclick="delAcc(${a.id})">×</button>
+      </div>`).join('');
+  }
+
+  // totals
+  const base=sal+res;
+  const totalAcc=accs.reduce((s,a)=>s+a.valor,0);
+  const totalGast=fat+totalAcc;
+  const livre=base-totalGast;
+  const pct=base>0?(totalGast/base)*100:0;
+  const qtd=(fat>0?1:0)+accs.length;
+
+  document.getElementById('ovTotal').textContent=fmt(totalGast);
+  document.getElementById('ovTotalSub').textContent=qtd+' conta'+(qtd!==1?'s':'');
+  const ovB=document.getElementById('ovBase');
+  ovB.textContent=base>0?fmt(base):'—';
+  ovB.style.color=livre<0?'var(--rose)':'var(--lime)';
+  document.getElementById('ovBaseSub').textContent=res>0?'salário + reserva':'salário';
+  document.getElementById('ovReserva').textContent=res>0?fmt(res):'—';
+  document.getElementById('ovReservaSub').textContent=res>0?'complemento':'não informada';
+  document.getElementById('ovPct').textContent=base>0?pct.toFixed(0)+'%':'—';
+  document.getElementById('ovPctSub').textContent=pct>=100?'⚠ estourou!':pct>=80?'⚠ atenção':'da base total';
+
+  // pie
+  const pieItems=[];
+  if(fat>0)pieItems.push({nome,valor:fat,cor:'#45e8d4'});
+  accs.forEach(a=>pieItems.push({nome:a.nome,valor:a.valor,cor:a.cor}));
+  drawPie(pieItems);
+
+  // summary
+  const sumBody=document.getElementById('sumBody');
+  const sumFooter=document.getElementById('sumFooter');
+  const sfVal=document.getElementById('sfVal');
+  if(!sal&&!res&&!pieItems.length){
+    sumBody.innerHTML='<div class="empty-msg">Defina o salário e adicione contas</div>';
+    sumFooter.style.display='none';return;
+  }
+  let rows='';
+  if(sal>0||res>0){
+    rows+=`<div class="sum-section-title">Entradas</div>`;
+    if(sal>0)rows+=sRow('var(--lime)','Salário','+'+fmt(sal),'var(--lime)');
+    if(res>0)rows+=sRow('var(--violet)','Reserva (cartão)','+'+fmt(res),'var(--violet)');
+  }
+  if(fat>0||accs.length){
+    rows+=`<div class="sum-section-title" style="margin-top:4px">Saídas</div>`;
+    if(fat>0)rows+=sRow('var(--cyan)',nome+(venc?' · dia '+venc:''),'− '+fmt(fat),'var(--cyan)');
+    accs.forEach(a=>rows+=sRow(a.cor,a.nome,'− '+fmt(a.valor),a.cor));
+  }
+  sumBody.innerHTML=rows||'<div class="empty-msg">Sem lançamentos</div>';
+  if(sal>0||res>0||totalGast>0){
+    sumFooter.style.display='flex';
+    sfVal.textContent=fmt(livre);
+    sfVal.className='sf-val'+(livre<0?' neg':'');
+  } else {sumFooter.style.display='none'}
+}
+
+function sRow(dot,label,val,vc){
+  return`<div class="sum-row">
+    <span class="sum-key"><div class="sum-dot" style="background:${dot}"></div><span class="sum-key-text">${label}</span></span>
+    <span class="sum-val" style="color:${vc}">${val}</span>
+  </div>`;
+}
+
+// init
+if(isLoggedIn()){loadInputs();render()}
+</script>
+</body>
+</html>
